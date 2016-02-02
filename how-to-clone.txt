@@ -1,0 +1,3 @@
+run this first on your local computer
+in bash run: git clone https://github.com/lawrencejleblanc/CFD_II.git
+now your repo on your local computer is linked to github
