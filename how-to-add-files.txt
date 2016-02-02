@@ -1,0 +1,7 @@
+create a file from any way you know how in the local folder.
+in bash run: git add <filename>
+then run: git commit
+that command will open up either vim or nano to create a commit message.
+type something informative, save it to the location already set up, and quit
+the run: git push
+this actually sends it to github.  you'll be required to enter a user/pass
