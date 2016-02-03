@@ -11,13 +11,13 @@ Module Solvers
 	contains
 	SUBROUTINE LUdecomp(n, A)
 	
-	!IMPLICIT NONE
+	IMPLICIT NONE
 
 	! Variable declaration
-	INTEGER :: k, i, j, size = 3
+	INTEGER :: k, i, j
 	REAL*8 :: lam = 0
 	INTEGER, INTENT(IN) :: n
-	REAL*8, dimension(:,:), INTENT(INOUT) :: A
+	REAL*8, dimension(0:n-1,0:n-1), INTENT(INOUT) :: A
 
 	DO k = 0, n-2, 1
 	
@@ -34,18 +34,18 @@ Module Solvers
 	ENDDO
 
 	RETURN
-	END
+	END SUBROUTINE
 
 	SUBROUTINE LUsolve(n, A, b)
 	
-	!IMPLICIT NONE
+	IMPLICIT NONE
 
 	! Variable declaration
-	INTEGER :: k, i, size = 3
+	INTEGER :: k, i
 	INTEGER, INTENT(IN) :: n
 	REAL*8 :: dotproduct
-	REAL*8, dimension(:,:), INTENT(IN) :: A
-	REAL*8, INTENT(INOUT) :: b(:)
+	REAL*8, dimension(0:n-1,0:n-1), INTENT(IN) :: A
+	REAL*8, INTENT(INOUT) :: b(0:n-1)
 
 	DO k = 1, n-1, 1
 
@@ -68,6 +68,6 @@ Module Solvers
 	ENDDO
 
 	RETURN
-	END	
+	END SUBROUTINE	
 	
 END Module

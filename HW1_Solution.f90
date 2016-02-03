@@ -10,23 +10,23 @@ Program HW1
 	IMPLICIT NONE
 	REAL*8, dimension(:,:), allocatable :: A
 	REAL*8, allocatable :: b(:), x(:)
-	INTEGER :: size = 3, i, j
+	INTEGER :: ssize = 3, i, j
 
 	!!Allocate array sizes -- note that I start the indicies at 0 and not 1 -- default is 1
-	allocate(A(0:size-1,0:size-1))
-	allocate(b(0:size-1))
-	allocate(x(0:size-1))
+	allocate(A(0:ssize-1,0:ssize-1))
+	allocate(b(0:ssize-1))
+	allocate(x(0:ssize-1))
 
 	!Set the coefficient matrix and the source vector
 
-	!A = reshape((/-2, 1, 0, 1, -2, 1, 0, 1, -2/), shape(A))
+	A = reshape((/-2, 1, 0, 1, -2, 1, 0, 1, -2/), shape(A))
 	
-	A = reshape((/1, 2, 0, 0, 1, 1, 1, 0, 1/), shape(A))
+	!A = reshape((/1, 2, 0, 0, 1, 1, 1, 0, 1/), shape(A))
 
 	
 	!print*, shape(A)
 
-	DO j = 0, size-1
+	DO j = 0, ssize-1
 		print *, A(j,0), A(j,1), A(j,2)
 	ENDDO
 	
@@ -34,12 +34,12 @@ Program HW1
 
 	!Call the LU Decomposition functions	
 
-	!CALL LUdecomp(size, A)
-	!CALL LUsolve(size, A, b)
+	CALL LUdecomp(ssize, A)
+	CALL LUsolve(ssize, A, b)
 
-	!DO j =0, size-1
-		!x(j) = b(j)
-		!print *, x(j)
-	!ENDDO
+	DO j =0, ssize-1
+		x(j) = b(j)
+		print *, x(j)
+	ENDDO
 
 END PROGRAM HW1
