@@ -59,7 +59,7 @@ Module Solvers
 
 	b(n-1) = b(n-1) / A(n-1,n-1)
 
-	DO k = n-2, -1, -1
+	DO k = n-2, 0, -1
 		dotproduct = 0.0
 		DO i = k+1, n-1, 1
 			dotproduct = dotproduct + A(k,i) * b(i)
