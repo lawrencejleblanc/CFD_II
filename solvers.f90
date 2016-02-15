@@ -9,6 +9,14 @@
 
 Module Solvers
 	contains
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!	Name: LUdecomp								    !
+!	Inputs: Vector size, n, and 2D coefficient matrix array			    !
+!	Outputs: Coefficient matrix A						    !
+!	Description: Subroutine takes in the coefficient matrix that make up the    !
+!		     linear equations and performs LU decomposition.		    !
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	SUBROUTINE LUdecomp(n, A)
 	
 	IMPLICIT NONE
@@ -35,6 +43,14 @@ Module Solvers
 
 	RETURN
 	END SUBROUTINE
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!       Name: LUsolve                                                               !
+!       Inputs: Vector size, 2D coefficient matrix array, and source   vector       !
+!       Outputs: Solution vector                                                    !
+!       Description: Subroutine takes in the coefficient matrix that make up the    !
+!                    linear equations and performs LU decomposition.                !
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	SUBROUTINE LUsolve(n, A, b)
 	
@@ -68,6 +84,87 @@ Module Solvers
 	ENDDO
 
 	RETURN
-	END SUBROUTINE	
-	
+	END SUBROUTINE
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!       Name: gauss_seidel                                                          !
+!       Inputs: x and y direction mesh size, temperature vector, 
+!
+!
+!
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+	SUBROUTINE gauss_seidell(xsize, ysize, ydelt, xdelt, q_gen, k, temp, T, Wbc, Ebc, Nbc, Sbc)
+
+	IMPLICIT NONE
+
+	! Variable declaration
+	INTEGER, INTENT(IN) :: xsize, ysize       ! x and y size of coefficient matrix
+	INTEGER :: i, ii, j, n = 0                    ! loop  counters
+	INTEGER :: converge = 1
+	REAL*8, INTENT(INOUT) :: temp(1:ysize)    ! solution vector
+	REAL*8 :: temp_prev(1:ysize)              ! temp solution for convergence check
+	REAL*8 :: INTENT(IN) :: a(1:xsize*ysize)  ! coefficient matrix
+	INTEGER :: An, Ae, Aw, As                 ! internal matrix points coefficients
+	REAL*8 :: ydelt, xdelt
+	REAL*8 :: q_gen                           ! heat generation
+        REAL*8 :: k                               ! thermal conductivity
+        INTEGER :: area                           ! total number of mesh points
+
+	area = xsize * ysize
+	An = 1 / (ydelt)^2
+	As = 1 / (ydelt)^2
+	Aw = 1 / (xdelt)^2
+	Ae = 1 / (xdelt)^2
+	Tn = T(i) + xsize
+	Ts = T(i) - xsize
+	Te = T(i) + 1
+	Tw = T(i) -1
+
+	DO i = 1, ysize
+		temp_prev(i) = 0
+	ENDDO
+	! Loop until convergence  criteria met or specified number of iterations
+	DO WHILE (converge .gt. 0.001 .or. n .lt. 100)
+		! Loop over west boundary and assign B.C. values
+		DO i = 0, (area-xsize), xsize
+			T(i) = Wbc
+		ENDDO
+		! Loop over south boundary and assign B.C. values
+		DO i = 2, xsize
+			T(i) = Sbc
+		ENDDO 
+		! Loop over east boundary and set B.C. values
+		DO i = xsize, area, xsize
+			T(i) = Ebc
+		ENDDO
+		! Loop over north boundary and assign B.C. values
+		DO i = area, area - xsize, -1
+			T(i) = Nbc
+		ENDDO
+		! Loop over internal points
+		DO i = xsize + 2, area - xsize. xsize
+			DO WHILE (j .lt. xsize - 2)
+				ii - i
+				T(ii) = 1/Ap*(-Ae*Te - As*Ts - Aw*Tw - An*Tn - q_gen/k)
+			ENDDO
+		ENDDO
+	ENDDO
+
+
+
+
+
+
+	END SUBROUTINE
+
+
+
+
+
+
+
+
+
 END Module
