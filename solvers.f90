@@ -52,7 +52,7 @@ Module Solvers
 !                    linear equations and performs LU decomposition.                !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-	SUBROUTINE LUsolve(n, A, b)
+	SUBROUTINE LUsolve(n, A, source)
 	
 	IMPLICIT NONE
 
@@ -61,26 +61,26 @@ Module Solvers
 	INTEGER, INTENT(IN) :: n
 	REAL*8 :: dotproduct
 	REAL*8, dimension(0:n-1,0:n-1), INTENT(IN) :: A
-	REAL*8, INTENT(INOUT) :: b(0:n-1)
+	REAL*8, INTENT(INOUT) :: source(0:n-1)
 
 	DO k = 1, n-1, 1
 
 	! Calculate dot product
 		dotproduct = 0.0
 		DO i =  0, k-1, 1
-			dotproduct = dotproduct + A(k,i)*b(i)
+			dotproduct = dotproduct + A(k,i)*source(i)
 		ENDDO
-		b(k) = b(k) - dotproduct
+		source(k) = source(k) - dotproduct
 	ENDDO
 
-	b(n-1) = b(n-1) / A(n-1,n-1)
+	source(n-1) = source(n-1) / A(n-1,n-1)
 
 	DO k = n-2, 0, -1
 		dotproduct = 0.0
 		DO i = k+1, n-1, 1
 			dotproduct = dotproduct + A(k,i) * b(i)
 		ENDDO
-		b(k) = (b(k) - dotproduct) / A(k,k)
+		source(k) = (source(k) - dotproduct) / A(k,k)
 	ENDDO
 
 	RETURN
@@ -95,35 +95,30 @@ Module Solvers
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-	SUBROUTINE gauss_seidell(xsize, ysize, ydelt, xdelt, q_gen, k, temp, T, Wbc, Ebc, Nbc, Sbc)
+	SUBROUTINE gauss_seidel(xsize, ysize, An, As, Aw, Ae, Ap, source, Wbc, Ebc, Nbc, Sbc, T)
 
 	IMPLICIT NONE
 
 	! Variable declaration
-	INTEGER, INTENT(IN) :: xsize, ysize       ! x and y size of coefficient matrix
-	INTEGER :: i, ii, j, n = 0                    ! loop  counters
+	INTEGER, INTENT(IN) :: xsize, ysize          ! x and y size of coefficient matrix
+	INTEGER :: i, ii, j, n = 0                   ! loop  counters
 	INTEGER :: converge = 1
-	REAL*8, INTENT(INOUT) :: temp(1:ysize)    ! solution vector
-	REAL*8 :: temp_prev(1:ysize)              ! temp solution for convergence check
-	REAL*8 :: INTENT(IN) :: a(1:xsize*ysize)  ! coefficient matrix
-	INTEGER :: An, Ae, Aw, As                 ! internal matrix points coefficients
-	REAL*8 :: ydelt, xdelt
-	REAL*8 :: q_gen                           ! heat generation
-        REAL*8 :: k                               ! thermal conductivity
-        INTEGER :: area                           ! total number of mesh points
+	INTEGER :: area = xsize * ysize              ! total number of mesh points
+	REAL*8 :: T_prev(1:ysize)                 ! temp solution for convergence check
+	REAL*8 :: INTENT(INOUT) :: T(1:xsize*ysize)  ! coefficient matrix
+	INTEGER, INTENT(IN) :: An, Ae, Aw, As        ! internal matrix points coefficients
+	REAL*8, INTENT(IN) :: source(1:ysize)        ! source vector consisting of heat generation
+                                                     ! over thermal conductivity
 
-	area = xsize * ysize
-	An = 1 / (ydelt)^2
-	As = 1 / (ydelt)^2
-	Aw = 1 / (xdelt)^2
-	Ae = 1 / (xdelt)^2
 	Tn = T(i) + xsize
 	Ts = T(i) - xsize
 	Te = T(i) + 1
 	Tw = T(i) -1
 
-	DO i = 1, ysize
-		temp_prev(i) = 0
+	DO i = 1, xsize + 2, area - xsize, xsize
+		j = 0
+		DO WHILE (j .lt. xsize - 3)
+		T_prev(i) = 0
 	ENDDO
 	! Loop until convergence  criteria met or specified number of iterations
 	DO WHILE (converge .gt. 0.001 .or. n .lt. 100)
@@ -144,10 +139,17 @@ Module Solvers
 			T(i) = Nbc
 		ENDDO
 		! Loop over internal points
-		DO i = xsize + 2, area - xsize. xsize
-			DO WHILE (j .lt. xsize - 2)
-				ii - i
-				T(ii) = 1/Ap*(-Ae*Te - As*Ts - Aw*Tw - An*Tn - q_gen/k)
+		DO i = xsize + 2, area - xsize, xsize
+			j=0
+			DO WHILE (j .lt. xsize - 3)
+				ii = i+j
+				Tn = T(ii) + xsize
+				Ts = T(ii) - xsize
+				Te = T(ii) + 1
+				Tw = T(ii) -1
+				T(ii) = 1/Ap*(-Ae*Te - As*Ts - Aw*Tw - An*Tn - source(ii))
+				j=j+1
+				
 			ENDDO
 		ENDDO
 	ENDDO
