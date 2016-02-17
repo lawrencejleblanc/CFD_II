@@ -95,7 +95,7 @@ Module Solvers
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-	SUBROUTINE gauss_seidel(xsize, ysize, An, As, Aw, Ae, Ap, source, Wbc, Ebc, Nbc, Sbc, T)
+	SUBROUTINE gauss_seidel(xsize, ysize, An, As, Aw, Ae, Ap, source, Wbc, Ebc, Nbc, Sbc, T, area)
 
 	IMPLICIT NONE
 
@@ -105,7 +105,7 @@ Module Solvers
 	INTEGER :: converge = 0
 	INTEGER :: area != xsize * ysize              ! total number of mesh points
 	REAL*8 :: T_prev(1:area)                     ! previous coefficient matrix for convergence                                                         ! check
-	REAL*8 :: INTENT(INOUT) :: T(1:xsize*ysize)  ! coefficient matrix
+	REAL*8, INTENT(INOUT) :: T(1:xsize*ysize)  ! coefficient matrix
 	REAL*8, INTENT(IN) :: An, Ae, Aw, As, Ap     ! internal matrix points coefficients
 	REAL*8, INTENT(IN) :: source                 ! source term  consisting of heat generation
                                                      ! over thermal conductivity
