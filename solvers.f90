@@ -102,26 +102,24 @@ Module Solvers
 	! Variable declaration
 	INTEGER, INTENT(IN) :: xsize, ysize          ! x and y size of coefficient matrix
 	INTEGER :: i, ii, j, n = 0                   ! loop  counters
-	INTEGER :: converge = 1
+	INTEGER :: converge = 0
 	INTEGER :: area = xsize * ysize              ! total number of mesh points
-	REAL*8 :: T_prev(1:ysize)                 ! temp solution for convergence check
+	REAL*8 :: T_prev(1:area)                     ! temp solution for convergence check
 	REAL*8 :: INTENT(INOUT) :: T(1:xsize*ysize)  ! coefficient matrix
 	INTEGER, INTENT(IN) :: An, Ae, Aw, As        ! internal matrix points coefficients
 	REAL*8, INTENT(IN) :: source(1:ysize)        ! source vector consisting of heat generation
                                                      ! over thermal conductivity
+	REAL*8 :: criteria = 0.0001
+	REAL*8, INTENT(IN) :: Wbc, Ebc, Nbc, Sbc     ! Boundary conditions
+        REAL*8, INTENT(IN) :: Tn, Ts, Te, Tw         ! Neighboring temperatures 
 
-	Tn = T(i) + xsize
-	Ts = T(i) - xsize
-	Te = T(i) + 1
-	Tw = T(i) -1
-
-	DO i = 1, xsize + 2, area - xsize, xsize
-		j = 0
-		DO WHILE (j .lt. xsize - 3)
+	! Initialize temperature previous vectors to 0
+	DO i = 1, area
 		T_prev(i) = 0
 	ENDDO
+
 	! Loop until convergence  criteria met or specified number of iterations
-	DO WHILE (converge .gt. 0.001 .or. n .lt. 100)
+	DO WHILE (converge .ne. 1 .or. n .lt. 100)
 		! Loop over west boundary and assign B.C. values
 		DO i = 0, (area-xsize), xsize
 			T(i) = Wbc
@@ -140,33 +138,24 @@ Module Solvers
 		ENDDO
 		! Loop over internal points
 		DO i = xsize + 2, area - xsize, xsize
-			j=0
+			j = 0
 			DO WHILE (j .lt. xsize - 3)
-				ii = i+j
-				Tn = T(ii) + xsize
-				Ts = T(ii) - xsize
-				Te = T(ii) + 1
-				Tw = T(ii) -1
+				ii = i + j
+				Tn = T(ii+xsize)
+				Ts = T(ii-xsize)
+				Te = T(ii+1)
+				Tw = T(ii-1)
 				T(ii) = 1/Ap*(-Ae*Te - As*Ts - Aw*Tw - An*Tn - source(ii))
+				if (ABS(T(ii) - T_prev(ii)) .gt. criteria)
+					  
+				ENDIF
 				j=j+1
 				
 			ENDDO
 		ENDDO
+		n = n + 1
 	ENDDO
 
-
-
-
-
-
 	END SUBROUTINE
-
-
-
-
-
-
-
-
 
 END Module
