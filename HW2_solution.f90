@@ -4,7 +4,7 @@
 !Program description: Calls the solver submodules to solve a matrix using the LU decomposition method.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-Program HW1
+Program HW2
 	!Use Solvers
 	IMPLICIT NONE
 	REAL*8, dimension(:,:), allocatable :: A
