@@ -18,11 +18,7 @@ Program HW1
 	allocate(x(0:ssize-1))
 
 	!Set the coefficient matrix and the source vector
-
 	A = reshape((/-2, 1, 0, 1, -2, 1, 0, 1, -2/), shape(A))
-	
-	!A = reshape((/1, 2, 0, 0, 1, 1, 1, 0, 1/), shape(A))
-
 	
 	!print*, shape(A)
 
@@ -33,7 +29,6 @@ Program HW1
 	b = reshape((/-100, 0, -10/), shape(b))
 
 	!Call the LU Decomposition functions	
-
 	CALL LUdecomp(ssize, A)
 	CALL LUsolve(ssize, A, b)
 

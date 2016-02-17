@@ -1,0 +1,12 @@
+This is how I envisioned the input file being layed out
+
+4		! Set value for number of nodes in x-direction
+4		! Set value for number of nodes in y-direction
+1		! Set value for size of mesh element in x-direction
+1		! Set value for size of mesh element in y-direction
+1		! Set value for heat generation divided by thermal conductivity
+1 1		! Set values for west B.C. type and value (1: Neumann 2: Direchlet)
+0 1             ! Set values for north B.C. type and value (1: Neumann 2: Direchlet)
+0 1             ! Set values for south B.C. type and value (1: Neumann 2: Direchlet)
+1 1             ! Set values for east B.C. type and value (1: Neumann 2: Direchlet)
+1		! Determine solver (1:Gauss-Seidel 2:LU Decomposition)

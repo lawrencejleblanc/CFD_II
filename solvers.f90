@@ -78,7 +78,7 @@ Module Solvers
 	DO k = n-2, 0, -1
 		dotproduct = 0.0
 		DO i = k+1, n-1, 1
-			dotproduct = dotproduct + A(k,i) * b(i)
+			dotproduct = dotproduct + A(k,i) * source(i)
 		ENDDO
 		source(k) = (source(k) - dotproduct) / A(k,k)
 	ENDDO
@@ -103,15 +103,15 @@ Module Solvers
 	INTEGER, INTENT(IN) :: xsize, ysize          ! x and y size of coefficient matrix
 	INTEGER :: i, ii, j, n = 0                   ! loop  counters
 	INTEGER :: converge = 0
-	INTEGER :: area = xsize * ysize              ! total number of mesh points
-	REAL*8 :: T_prev(1:area)                     ! temp solution for convergence check
+	INTEGER :: area != xsize * ysize              ! total number of mesh points
+	REAL*8 :: T_prev(1:area)                     ! previous coefficient matrix for convergence                                                         ! check
 	REAL*8 :: INTENT(INOUT) :: T(1:xsize*ysize)  ! coefficient matrix
-	INTEGER, INTENT(IN) :: An, Ae, Aw, As        ! internal matrix points coefficients
-	REAL*8, INTENT(IN) :: source(1:ysize)        ! source vector consisting of heat generation
+	REAL*8, INTENT(IN) :: An, Ae, Aw, As, Ap     ! internal matrix points coefficients
+	REAL*8, INTENT(IN) :: source                 ! source term  consisting of heat generation
                                                      ! over thermal conductivity
 	REAL*8 :: criteria = 0.0001
 	REAL*8, INTENT(IN) :: Wbc, Ebc, Nbc, Sbc     ! Boundary conditions
-        REAL*8, INTENT(IN) :: Tn, Ts, Te, Tw         ! Neighboring temperatures 
+        REAL*8 :: Tn, Ts, Te, Tw                     ! Neighboring temperatures 
 
 	! Initialize temperature previous vectors to 0
 	DO i = 1, area
@@ -119,9 +119,9 @@ Module Solvers
 	ENDDO
 
 	! Loop until convergence  criteria met or specified number of iterations
-	DO WHILE (converge .ne. 1 .or. n .lt. 100)
+	DO WHILE (n .lt. 100)
 		! Loop over west boundary and assign B.C. values
-		DO i = 0, (area-xsize), xsize
+		DO i = 1, (area-xsize), xsize
 			T(i) = Wbc
 		ENDDO
 		! Loop over south boundary and assign B.C. values
@@ -145,16 +145,19 @@ Module Solvers
 				Ts = T(ii-xsize)
 				Te = T(ii+1)
 				Tw = T(ii-1)
-				T(ii) = 1/Ap*(-Ae*Te - As*Ts - Aw*Tw - An*Tn - source(ii))
-				if (ABS(T(ii) - T_prev(ii)) .gt. criteria)
+				T(ii) = 1/Ap*(-Ae*Te - As*Ts - Aw*Tw - An*Tn - source)
+				!if (ABS(T(ii) - T_prev(ii)) .gt. criteria)
 					  
-				ENDIF
-				j=j+1
+				!ENDIF
+				! Set T previous to newly found T value
+				T_prev(ii) = T(ii)
+				j = j+1
 				
 			ENDDO
 		ENDDO
 		n = n + 1
 	ENDDO
+	RETURN
 
 	END SUBROUTINE
 
