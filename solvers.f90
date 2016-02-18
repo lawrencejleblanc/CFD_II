@@ -52,7 +52,7 @@ Module Solvers
 !                    linear equations and performs LU decomposition.                !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-	SUBROUTINE LUsolve(n, A, source)
+	SUBROUTINE LUsolve(n, A, b)
 	
 	IMPLICIT NONE
 
@@ -61,26 +61,26 @@ Module Solvers
 	INTEGER, INTENT(IN) :: n
 	REAL*8 :: dotproduct
 	REAL*8, dimension(0:n-1,0:n-1), INTENT(IN) :: A
-	REAL*8, INTENT(INOUT) :: source(0:n-1)
+	REAL*8, INTENT(INOUT) :: b(0:n-1)
 
 	DO k = 1, n-1, 1
 
 	! Calculate dot product
 		dotproduct = 0.0
 		DO i =  0, k-1, 1
-			dotproduct = dotproduct + A(k,i)*source(i)
+			dotproduct = dotproduct + A(k,i)*b(i)
 		ENDDO
-		source(k) = source(k) - dotproduct
+		b(k) = b(k) - dotproduct
 	ENDDO
 
-	source(n-1) = source(n-1) / A(n-1,n-1)
+	b(n-1) = b(n-1) / A(n-1,n-1)
 
 	DO k = n-2, 0, -1
 		dotproduct = 0.0
 		DO i = k+1, n-1, 1
-			dotproduct = dotproduct + A(k,i) * source(i)
+			dotproduct = dotproduct + A(k,i) * b(i)
 		ENDDO
-		source(k) = (source(k) - dotproduct) / A(k,k)
+		b(k) = (b(k) - dotproduct) / A(k,k)
 	ENDDO
 
 	RETURN
@@ -95,23 +95,24 @@ Module Solvers
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-	SUBROUTINE gauss_seidel(xsize, ysize, An, As, Aw, Ae, Ap, source, Wbc, Ebc, Nbc, Sbc, T, area)
+	SUBROUTINE gauss_seidel(xsize, ysize, An, As, Aw, Ae, Ap, source, Wbc, Ebc, Nbc, Sbc, T, area, wtype, etype, stype, ntype)
 
 	IMPLICIT NONE
 
 	! Variable declaration
-	INTEGER, INTENT(IN) :: xsize, ysize          ! x and y size of coefficient matrix
-	INTEGER :: i, ii, j, n = 0                   ! loop  counters
+	INTEGER, INTENT(IN) :: xsize, ysize               ! x and y size of coefficient matrix
+	INTEGER :: i, ii, j, n = 0                        ! loop  counters
 	INTEGER :: converge = 0
-	INTEGER :: area != xsize * ysize              ! total number of mesh points
-	REAL*8 :: T_prev(1:area)                     ! previous coefficient matrix for convergence                                                         ! check
-	REAL*8, INTENT(INOUT) :: T(1:xsize*ysize)  ! coefficient matrix
-	REAL*8, INTENT(IN) :: An, Ae, Aw, As, Ap     ! internal matrix points coefficients
-	REAL*8, INTENT(IN) :: source                 ! source term  consisting of heat generation
-                                                     ! over thermal conductivity
+	INTEGER, INTENT(IN) :: wtype, stype, ntype, etype ! B.C. type determination
+	INTEGER, INTENT(IN) :: area                       ! total number of mesh points
+	REAL*8 :: T_prev(1:area)                          ! previous coefficient matrix for                                                                     ! convergence  check
+	REAL*8, INTENT(INOUT) :: T(1:xsize*ysize)         ! coefficient matrix
+	REAL*8, INTENT(IN) :: An, Ae, Aw, As, Ap          ! internal matrix points coefficients
+	REAL*8, INTENT(IN) :: source                      ! source term  consisting of heat generation
+                                                          ! over thermal conductivity
 	REAL*8 :: criteria = 0.0001
-	REAL*8, INTENT(IN) :: Wbc, Ebc, Nbc, Sbc     ! Boundary conditions
-        REAL*8 :: Tn, Ts, Te, Tw                     ! Neighboring temperatures 
+	REAL*8, INTENT(IN) :: Wbc, Ebc, Nbc, Sbc          ! Boundary conditions
+        REAL*8 :: Tn, Ts, Te, Tw                          ! Neighboring temperatures 
 
 	! Initialize temperature previous vectors to 0
 	DO i = 1, area
@@ -119,36 +120,53 @@ Module Solvers
 	ENDDO
 
 	! Loop until convergence  criteria met or specified number of iterations
-	DO WHILE (n .lt. 100)
+	DO WHILE (converge .eq. 0 .AND. n .lt. 100)
+		converge = 1  !Assume converged
 		! Loop over west boundary and assign B.C. values
 		DO i = 1, (area-xsize), xsize
-			T(i) = Wbc
+			IF (wtype .eq. 1) THEN
+				T(i) = Wbc
+			ELSE IF (wtype .eq. 0) THEN
+				T(i) = T(i+1)
+			ENDIF
 		ENDDO
-		! Loop over south boundary and assign B.C. values
-		DO i = 2, xsize
-			T(i) = Sbc
-		ENDDO 
 		! Loop over east boundary and set B.C. values
 		DO i = xsize, area, xsize
-			T(i) = Ebc
+			IF (etype .eq. 1) THEN
+				T(i) = Ebc
+			ELSE IF (etype .eq. 0) THEN
+				T(i) = T(i-1)
+			ENDIF
+		ENDDO
+		! Loop over south boundary and assign B.C. values
+		DO i = 1, xsize
+			IF (stype .eq. 1) THEN
+				T(i) = Sbc
+			ELSE IF (stype .eq. 0) THEN
+				T(i) = T(i+xsize)
+			END IF
 		ENDDO
 		! Loop over north boundary and assign B.C. values
-		DO i = area, area - xsize, -1
-			T(i) = Nbc
+		DO i = area, area - xsize+1, -1
+			IF (ntype .eq. 1) THEN
+				T(i) = Nbc
+			ELSE IF (ntype .eq. 0) THEN
+				T(i) = T(i-xsize)
+			END IF
 		ENDDO
 		! Loop over internal points
 		DO i = xsize + 2, area - xsize, xsize
 			j = 0
-			DO WHILE (j .lt. xsize - 3)
+			DO WHILE (j .lt. (xsize - 2))
 				ii = i + j
 				Tn = T(ii+xsize)
 				Ts = T(ii-xsize)
 				Te = T(ii+1)
 				Tw = T(ii-1)
 				T(ii) = 1/Ap*(-Ae*Te - As*Ts - Aw*Tw - An*Tn - source)
-				!if (ABS(T(ii) - T_prev(ii)) .gt. criteria)
-					  
-				!ENDIF
+				If (ABS(T(ii) - T_prev(ii)) .gt. criteria) THEN
+					converge = 0  
+				ENDIF
 				! Set T previous to newly found T value
 				T_prev(ii) = T(ii)
 				j = j+1

@@ -9,12 +9,13 @@ Program HW2
 	IMPLICIT NONE
 	REAL*8, dimension(:,:), allocatable :: A
 	REAL*8, allocatable :: b(:), x(:), T(:)
-	INTEGER :: i, j, OpenStatus, solver = 1
-	REAL*8 :: xsize, ysize, dx, dy, q_gen, Wbc, Ebc, Nbc, Sbc
+	INTEGER :: i, j, wtype, etype, stype, ntype, OpenStatus, solver = 1
+	REAL*8 :: dx, dy, q_gen, Wbc, Ebc, Nbc, Sbc, As, An, Ae, Ap, Aw, y, xx
+	INTEGER :: xsize, ysize, area
 
 	! Opens input file
 	!OPEN (UNIT = 1, FILE = "input.dat", STATUS = "OLD", ACTION = "READWRITE", IOSTAT = OpenStatus)
-
+	OPEN (UNIT = 2, FILE = "output.dat", ACTION = "WRITE")
 	!IF (OpenStatus .gt. 0) STOP "** Cannot open input file **"
 	!ENDIF
 
@@ -26,45 +27,72 @@ Program HW2
 	!WRITE (*,8) "xsize =", xsize, "ysize =", ysize, "dx =", dx, "dy =", dy, "source =", source 
 	!8 FORMAT(1X, A7, F6.2, /, 1X, A7, F6.2, /, 1X, A4, F6.2, /, 1X, A4, F6.2, /, 1X, A5, F6.2)  
 	
-	! Allocate array sizes
-	allocate(T(1:xsize*ysize))
-	!allocate(b(0:ysize-1))
-	!allocate(A(0:xsize-1,0:ysize-1))
-	!allocate(x(0:ysize-1))
-	
 	xsize = 4
 	ysize = 4
 	dx = 1
 	dy = 1
 	q_gen = 1
 	Wbc = 1
-	Sbc = 0
+	Sbc = 1
 	Ebc = 1
 	Nbc = 1
-
-	DO i = 1, xsize*ysize
-		T(i) = 0
-	ENDDO
+	area = xsize * ysize
+	ntype = 1
+	stype = 1
+	etype = 1
+	wtype = 1
 
 	As = 1/(dy**2)
 	An = As
 	Aw = 1/(dx**2)
 	Ae = Aw
-	Ap = 2/(dx**2)-2/(dy**2)
+	Ap = (-2/(dx**2))-(2/(dy**2))
+	
+	print*, As, An, Aw, Ae, Ap
+	
+	print*, ""
 
 	! Call solver suboutines
-	IF (solver .eq. 1)
-		CALL gauss_seidel(xsize, ysize, An, As, Aw, Ae, Ap, q_gen, Wbc, Ebc, Nbc, Sbc, T)
-	!ELSEIF (solver .ne. 1)
-	!	CALL coefficient_construct(A, source, T)
-	!	CALL LUdecomp(ssize, A)
-	!	CALL LUsolve(ssize, A, b)
-	!	        DO j =0, ssize-1
-	!			x(j) = source(j)
-	!			print *, x(j)
-	!	 ENDDO
+	IF (solver .eq. 1)THEN
+		allocate(T(1:xsize*ysize))
+		DO i = 1, xsize*ysize, 1
+			T(i) = 0
+		ENDDO
+		CALL gauss_seidel(xsize, ysize, An, As, Aw, Ae, Ap, q_gen, Wbc, Ebc, Nbc, Sbc, T, area, wtype, etype, stype, ntype)
+		 ! Write the header to the output tecplot file
+		WRITE(2,*) '"X" "Y" "TEMPERATURE"'
+		WRITE(2,9) "zone I=", xsize, "J=", ysize, " SOLUTIONTIME=", 0.00, "F=POINT"
+		9 FORMAT(2X, A7, I1, 2X, A3, I1, 2X, A14, F6.3, 2X, A7)
+		
+		 ! Write the x position, y position, and temperature values to the tecplot file
+		DO j = 1, area, 1
+			xx = (MOD(j, (xsize)) - 1)*dx
+			IF (xx .lt. 0) THEN
+				xx = xx + (xsize*dx)
+			ENDIF
+			y = ((j - 1)/(xsize))*dy
+			WRITE(2,11) xx, y, T(j)
+			11 FORMAT(F10.5, 3X, F10.5, 3X, F10.5)
+		ENDDO
+		
+		!DO j = 1, area, 1
+		!	print*, T(j)
+		!ENDDO
+	
+	!ELSEIF (solver .ne. 1)THEN
+		!ALLOCATE(A(0:xsize-1,0:ysize-1))
+		!ALLOCATE(b(0:ysize-1))
+		!ALLOCATE(x(0:ysize-1))
+		!CALL coefficient_construct(A, b, T)
+		!CALL LUdecomp(ysize, A)
+		!CALL LUsolve(ysize, A, b)
+		!        DO j =0, ysize-1
+		!		x(j) = b(j)
+		!		print *, x(j)
+		! ENDDO
 	ENDIF
 
 	!CLOSE (UNIT =1)
+	Close (UNIT = 2)
 
-END PROGRAM HW1
+END PROGRAM HW2
