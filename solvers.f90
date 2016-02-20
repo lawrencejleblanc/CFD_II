@@ -110,7 +110,7 @@ Module Solvers
 	REAL*8, INTENT(IN) :: An, Ae, Aw, As, Ap          ! internal matrix points coefficients
 	REAL*8, INTENT(IN) :: source                      ! source term  consisting of heat generation
                                                           ! over thermal conductivity
-	REAL*8 :: criteria = 0.0001
+	REAL*8 :: criteria = 0.00001
 	REAL*8, INTENT(IN) :: Wbc, Ebc, Nbc, Sbc          ! Boundary conditions
         REAL*8 :: Tn, Ts, Te, Tw                          ! Neighboring temperatures 
 
@@ -120,7 +120,7 @@ Module Solvers
 	ENDDO
 
 	! Loop until convergence  criteria met or specified number of iterations
-	DO WHILE (converge .eq. 0 .AND. n .lt. 100)
+	DO WHILE (converge .eq. 0 .AND. n .lt. 10000)
 		converge = 1  !Assume converged
 		! Loop over west boundary and assign B.C. values
 		DO i = 1, (area-xsize), xsize
@@ -157,7 +157,7 @@ Module Solvers
 		! Loop over internal points
 		DO i = xsize + 2, area - xsize, xsize
 			j = 0
-			DO WHILE (j .lt. (xsize - 2))
+			DO WHILE (j .le. (xsize - 2))
 				ii = i + j
 				Tn = T(ii+xsize)
 				Ts = T(ii-xsize)
@@ -165,6 +165,7 @@ Module Solvers
 				Tw = T(ii-1)
 				T(ii) = 1/Ap*(-Ae*Te - As*Ts - Aw*Tw - An*Tn - source)
 				If (ABS(T(ii) - T_prev(ii)) .gt. criteria) THEN
+                                        !print*, n
 					converge = 0  
 				ENDIF
 				! Set T previous to newly found T value
@@ -174,6 +175,7 @@ Module Solvers
 			ENDDO
 		ENDDO
 		n = n + 1
+                print*, n
 	ENDDO
 	RETURN
 
