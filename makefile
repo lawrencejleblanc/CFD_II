@@ -3,8 +3,9 @@
 #see http://faculty.washington.edu/rjl/classes/am583s2013/notes/fortran_modules.html
 
 FC = gfortran
-objects = HW1_Solution.o
+objects = HW2_solution.o
 MOD = solvers.o
+#MOD = solvers.o utility.o
 
 %.o: %.f90
 	$(FC) -c $<

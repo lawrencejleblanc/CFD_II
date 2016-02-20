@@ -10,7 +10,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 Program HW2
-	Use Solvers, coefficient_construct
+	Use Solvers !, utility
 	IMPLICIT NONE
 
 	! Variable declaration
@@ -21,33 +21,32 @@ Program HW2
 	INTEGER :: xsize, ysize, area, source_size
 
 	! Opens input file and output tecplot file
-	!OPEN (UNIT = 1, FILE = "input.dat", STATUS = "OLD", ACTION = "READWRITE", IOSTAT = OpenStatus)
+	OPEN (UNIT = 1, FILE = "input.dat", IOSTAT = OpenStatus)
 	OPEN (UNIT = 2, FILE = "output.dat", ACTION = "WRITE")
-	!IF (OpenStatus .gt. 0) STOP "** Cannot open input file **"
-	!ENDIF
+	IF (OpenStatus .gt. 0) THEN
+		STOP "** Cannot open input file **"
+	ENDIF
 
 	! Reads values from input file
-	!READ (1, *) xsize, ysize, dx, dy, source, solver
-	!7 FORMAT(1X, F5.2, /, 1X, F5.2, /, 1X, F5.2, /, 1X, F5.2, / ,1X, F5.2, /, 1X, I1)
+	! Input file must be in this order and format
+	! can include comments on the same lines only. must be after
+	! the required numbers/integers/floats
+	READ (1, *) xsize
+	READ (1, *) ysize
+	READ (1, *) dx
+	READ (1, *) dy
+	READ (1, *) q_gen
+	READ (1, *) Wbc, wtype
+	READ (1, *) Nbc, ntype
+	READ (1, *) Sbc, stype
+	READ (1, *) Ebc, etype
+	READ (1, *) solver 
 	
 	! Print the input file values to the screen
-	!WRITE (*,8) "xsize =", xsize, "ysize =", ysize, "dx =", dx, "dy =", dy, "source =", source 
-	!8 FORMAT(1X, A7, F6.2, /, 1X, A7, F6.2, /, 1X, A4, F6.2, /, 1X, A4, F6.2, /, 1X, A5, F6.2)  
+	WRITE (*,8) "xsize =", xsize, "ysize =", ysize, "dx =", dx, "dy =", dy 
+	8 FORMAT(1X, A7, I2, /, 1X, A7, I2, /, 1X, A4, F6.2, /, 1X, A4, F6.2)
 	
-	xsize = 4
-	ysize = 4
-	dx = 1
-	dy = 1
-	q_gen = 1
-	Wbc = 1
-	Sbc = 1
-	Ebc = 1
-	Nbc = 1
 	area = xsize * ysize
-	ntype = 1
-	stype = 1
-	etype = 1
-	wtype = 1
 	
 	! Calculate matrix coefficients
 	As = 1/(dy**2)
@@ -71,8 +70,8 @@ Program HW2
 		CALL gauss_seidel(xsize, ysize, An, As, Aw, Ae, Ap, q_gen, Wbc, Ebc, Nbc, Sbc, T, area, wtype, etype, stype, ntype)
 		
 		! Write the header to the output tecplot file
-		WRITE(2,*) '"X" "Y" "TEMPERATURE"'
-		WRITE(2,9) "zone I=", xsize, "J=", ysize, " SOLUTIONTIME=", 0.00, "F=POINT"
+		WRITE(2,*) 'VARIABLES = "X" "Y" "TEMPERATURE"'
+		WRITE(2,9) "zone I=", xsize, "J=", ysize, " SOLUTIONTIME=", 0.00, ", F=POINT"
 		9 FORMAT(2X, A7, I1, 2X, A3, I1, 2X, A14, F6.3, 2X, A7)
 		
 		! Write the x position, y position, and temperature values to the tecplot file
@@ -86,20 +85,20 @@ Program HW2
 			11 FORMAT(F10.5, 3X, F10.5, 3X, F10.5)
 		ENDDO
 		
-	!ELSEIF (solver .ne. 1)THEN
+	!ELSE
 		!ALLOCATE(A(0:xsize-1,0:ysize-1))
 		!ALLOCATE(b(0:ysize-1))
 		!ALLOCATE(x(0:ysize-1))
 		!CALL coefficient_construct(A, b, T)
 		!CALL LUdecomp(ysize, A)
 		!CALL LUsolve(ysize, A, b)
-		!        DO j =0, ysize-1
-		!		x(j) = b(j)
-		!		print *, x(j)
-		! ENDDO
+		        !DO j =0, ysize-1
+				!x(j) = b(j)
+				!print *, x(j)
+			!ENDDO
 	ENDIF
 
-	!CLOSE (UNIT =1)
-	Close (UNIT = 2)
+	CLOSE (1) ! close input file
+	CLOSE (2) ! close output file
 
 END PROGRAM HW2
