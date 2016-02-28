@@ -88,11 +88,14 @@ Module Solvers
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !       Name: gauss_seidel                                                          !
-!       Inputs: x and y direction mesh size, temperature vector, 
-!
-!
-!
-!
+!       Inputs: x and y direction mesh size, temperature vector, matrix coefficients! 
+!	        for present, west, south, north, and east points, heat generation   ! 
+!               divided by thermal conductivity (source), values for each boundary  !
+!		, temperature matrix to store temperatures for Gauss-Seidel, total  !
+!		 number of mesh points, and boundary condition types                !
+!	Outputs: Temperature values for the mesh points				    !
+!	Description: This subroutine iteratively solves a system of linear          !
+!		     equations using the Gauss-Seidel method.			    !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	SUBROUTINE gauss_seidel(xsize, ysize, An, As, Aw, Ae, Ap, source, Wbc, Ebc, Nbc, Sbc, T, area, wtype, etype, stype, ntype)
@@ -119,10 +122,13 @@ Module Solvers
 		T_prev(i) = 0
 	ENDDO
 
+	!DO i = 1, area, 1
 	! Loop until convergence  criteria met or specified number of iterations
 	DO WHILE (converge .eq. 0 .AND. n .lt. 10000)
 		converge = 1  !Assume converged
+		
 		! Loop over west boundary and assign B.C. values
+		
 		DO i = 1, (area-xsize), xsize
 			IF (wtype .eq. 1) THEN
 				T(i) = Wbc
@@ -131,6 +137,7 @@ Module Solvers
 			ENDIF
 		ENDDO
 		! Loop over east boundary and set B.C. values
+		!IF
 		DO i = xsize, area, xsize
 			IF (etype .eq. 1) THEN
 				T(i) = Ebc
@@ -147,7 +154,7 @@ Module Solvers
 			END IF
 		ENDDO
 		! Loop over north boundary and assign B.C. values
-		DO i = area, area - xsize+1, -1
+		DO i = area, area - (xsize-1), -1
 			IF (ntype .eq. 1) THEN
 				T(i) = Nbc
 			ELSE IF (ntype .eq. 0) THEN
@@ -157,7 +164,7 @@ Module Solvers
 		! Loop over internal points
 		DO i = xsize + 2, area - xsize, xsize
 			j = 0
-			DO WHILE (j .le. (xsize - 2))
+			DO WHILE (j .le. (xsize - 3))
 				ii = i + j
 				Tn = T(ii+xsize)
 				Ts = T(ii-xsize)
@@ -165,7 +172,6 @@ Module Solvers
 				Tw = T(ii-1)
 				T(ii) = 1/Ap*(-Ae*Te - As*Ts - Aw*Tw - An*Tn - source)
 				If (ABS(T(ii) - T_prev(ii)) .gt. criteria) THEN
-                                        !print*, n
 					converge = 0  
 				ENDIF
 				! Set T previous to newly found T value
@@ -175,8 +181,9 @@ Module Solvers
 			ENDDO
 		ENDDO
 		n = n + 1
-                print*, n
+ 
 	ENDDO
+	!ENDDO
 	RETURN
 
 	END SUBROUTINE

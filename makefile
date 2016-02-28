@@ -3,8 +3,8 @@
 #see http://faculty.washington.edu/rjl/classes/am583s2013/notes/fortran_modules.html
 
 FC = gfortran
-objects = HW1_Solution.o
-MOD = solvers.o
+objects = HW2_solution.o
+MOD = solvers.o matrix_coefficients.o
 
 %.o: %.f90
 	$(FC) -c $<

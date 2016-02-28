@@ -23,33 +23,34 @@ Program HW2
 	INTEGER :: xsize, ysize, area, source_size
 
 	! Opens input file and output tecplot file
-	!OPEN (UNIT = 1, FILE = "input.dat", STATUS = "OLD", ACTION = "READWRITE", IOSTAT = OpenStatus)
+	OPEN (UNIT = 1, FILE = "input.dat", IOSTAT = OpenStatus)
 	OPEN (UNIT = 2, FILE = "output.dat", ACTION = "WRITE")
-	!IF (OpenStatus .gt. 0) STOP "** Cannot open input file **"
-	!ENDIF
+	IF (OpenStatus .gt. 0) THEN
+		STOP "** Cannot open input file **"
+	ENDIF
 
 	! Reads values from input file
-	!READ (1, *) xsize, ysize, dx, dy, source, solver
-	!7 FORMAT(1X, F5.2, /, 1X, F5.2, /, 1X, F5.2, /, 1X, F5.2, / ,1X, F5.2, /, 1X, I1)
+	READ (1, *) xsize
+	READ (1, *) ysize
+	READ (1, *) dx
+	READ (1, *) dy
+	READ (1, *) q_gen
+	READ (1, *) Wbc, wtype
+	READ (1, *) Nbc, ntype
+	READ (1, *) Sbc, stype
+	READ (1, *) Ebc, etype
+	READ (1, *) solver
 	
 	! Print the input file values to the screen
-	!WRITE (*,8) "xsize =", xsize, "ysize =", ysize, "dx =", dx, "dy =", dy, "source =", source 
-	!8 FORMAT(1X, A7, F6.2, /, 1X, A7, F6.2, /, 1X, A4, F6.2, /, 1X, A4, F6.2, /, 1X, A5, F6.2)  
+	WRITE (*,8) "xsize =", xsize, "ysize =", ysize, "dx =", dx, "dy =", dy, "q_gen =", q_gen 
+	8 FORMAT(1X, A7, I4, /, 1X, A7, I4, /, 1X, A4, F5.2, /, 1X, A4, F5.2, /, 1X, A7, F6.2)
+	WRITE (*,7) "Wbc =", Wbc, "wtype =", wtype, "Nbc =", Nbc, "ntype =", ntype, "Sbc =", Sbc
+	7 FORMAT(1X, A5, F5.2, /, 1X, A7, I1, /, 1X, A5, F5.2, /, 1X, A7, I1, /, 1X, A5, F5.2)
+	WRITE (*,10) "stype =", stype, "Ebc =", Ebc, "etype =", etype, "solver =", solver
+	10 FORMAT(1x, A7, I1, /, 1X, A5, F5.2, /, 1x, A7, I1, /, 1X, A8, I1)
 	
-	xsize = 5
-	ysize = 5
-	dx = 1
-	dy = 1
-	q_gen = 0
-	Wbc = 1
-	Sbc = 1
-	Ebc = 1
-	Nbc = 1
+	! Determines total number of mesh points in the domain
 	area = xsize * ysize
-	ntype = 1
-	stype = 1
-	etype = 1
-	wtype = 1
 	
 	! Calculate matrix coefficients
 	As = 1/(dy**2)
@@ -61,9 +62,10 @@ Program HW2
 	print*, ""
 
 	! Call solver suboutines
+	! Condition check for Gauss-Seidel solver
 	IF (solver .eq. 1)THEN
 		allocate(T(1:xsize*ysize))
-		! Initialize temperature array to 0. These values are sued as initial T_prev
+		! Initialize temperature array to 0. These values are used as initial T_prev
 		DO i = 1, xsize*ysize, 1
 			T(i) = 0
 		ENDDO
@@ -86,21 +88,43 @@ Program HW2
 			11 FORMAT(F10.5, 3X, F10.5, 3X, F10.5)
 		ENDDO
 		
+	! Condition check for LU Decomposition solver
 	ELSEIF (solver .ne. 1)THEN
+		! Matrice construction subroutine
 		CALL coefficient_construct(A, b, Ap, Ae, An, Aw, As, q_gen, &
                 &source_size, ntype, stype, wtype, etype, Wbc, Sbc, Nbc, Ebc, xsize, ysize)
-                DO i = 0, 8
-                        print*, A(i,0),A(i,1),A(i,2),A(i,3),A(i,4),A(i,5),A(i,6),A(i,7),A(i,8)               
-                ENDDO
-		!CALL LUdecomp(ysize, A)
-		!CALL LUsolve(ysize, A, b)
-		!        DO j =0, ysize-1
-		!		x(j) = b(j)
-		!		print *, x(j)
-		! ENDDO
+              
+		!DO i = 0, source_size - 1
+                 !       DO j = 0, source_size - 1
+                  !              print*, A(i,j), "", i, "", j
+                   !     ENDDO
+		!ENDDO
+		!DO i = 0, source_size - 1
+		!	print*,b(i)
+		!ENDDO 
+		! LU Decomposition solver
+		CALL LUdecomp(source_size, A)
+		CALL LUsolve(source_size, A, b)
+
+		! Write the header to the output tecplot file
+		WRITE(2,*) 'Variables = "X" "Y" "TEMPERATURE"'
+		WRITE(2,13) "zone I=", xsize-2, "J=", ysize-2, " SOLUTIONTIME=", 0.00, "F=POINT"
+		13 FORMAT(2X, A7, I4, 2X, A3, I4, 2X, A14, F6.3, 2X, A7)
+		
+		! Write the x-position, y-position, and temperature values to the tecplot file
+		DO j = 0, source_size - 1, 1
+			xx = (MOD(j, (xsize-2)) + 1)*dx
+			IF (xx .lt. 0) THEN
+				xx = xx + (xsize*dx)
+			ENDIF
+			y = ((j)/(xsize-2)+1)*dy
+			WRITE(2,14) xx, y, b(j)
+			14 FORMAT(F10.5, 3X, F10.5, 3X, F10.5)
+		ENDDO
 	ENDIF
 
-	!CLOSE (UNIT =1)
-	Close (UNIT = 2)
+	! Close input and output files
+	CLOSE (1)
+	Close (2)
 
 END PROGRAM HW2
